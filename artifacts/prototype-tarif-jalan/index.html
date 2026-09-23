@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Studio 88 Plan · Tata Ruang & Estimasi Tarif Jalan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --navy: #07324a;
+      --navy-2: #0b4664;
+      --ink: #12202b;
+      --muted: #5b6b76;
+      --line: #d7e1e8;
+      --bg: #eef3f6;
+      --card: #ffffff;
+      --green: #1b8f5a;
+      --green-soft: #e8f6ee;
+      --amber-soft: #fff4e3;
+      --shadow: 0 10px 30px rgba(7, 50, 74, 0.08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    a { color: inherit; }
+    img { max-width: 100%; display: block; }
+
+    header.top {
+      background: rgba(5, 24, 36, .86);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      padding: 12px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .logo {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: rgba(255,255,255,.12);
+      display: grid; place-items: center;
+      font-weight: 800; border: 1px solid rgba(255,255,255,.18);
+    }
+    .brand b { display: block; font-size: 15px; }
+    .brand small { color: #c9dde8; font-size: 11px; }
+    nav.main { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    nav.main button, .btn {
+      border: 0; cursor: pointer; font-family: inherit; font-weight: 700;
+      border-radius: 10px; padding: 8px 12px; font-size: 13px;
+    }
+    nav.main button {
+      background: transparent; color: #d7e6ee;
+    }
+    nav.main button:hover, nav.main button.active { background: rgba(255,255,255,.12); color: #fff; }
+    .btn-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.16); }
+    .btn-green { background: #22a366; color: #fff; }
+    .btn-navy { background: var(--navy); color: #fff; }
+    .btn-white { background: #fff; color: var(--navy); }
+    .btn-line { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.55); }
+    .badge {
+      font-size: 10px; font-weight: 800; letter-spacing: .04em;
+      background: #1b8f5a; color: #fff; padding: 3px 7px; border-radius: 999px;
+      text-transform: uppercase; margin-left: 6px;
+    }
+
+    .page { display: none; }
+    .page.show { display: block; }
+
+    .hero {
+      min-height: 92vh;
+      background:
+        linear-gradient(180deg, rgba(5,20,32,.35) 0%, rgba(5,20,32,.72) 100%),
+        url("https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1920&q=80") center/cover no-repeat;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .hero span { letter-spacing: .28em; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #d5e6ef; }
+    .hero h1 { font-size: clamp(36px, 6vw, 72px); line-height: .95; margin: 16px 0 18px; font-weight: 800; }
+    .hero p { max-width: 620px; margin: 0 auto 28px; color: #e4eef4; font-size: 17px; }
+    .hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+    .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+    section.block { padding: 72px 0; }
+    .kicker { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--green); font-weight: 800; }
+    .block h2 { font-size: clamp(26px, 4vw, 40px); margin: 8px 0 14px; }
+    .lead { color: var(--muted); max-width: 680px; line-height: 1.7; }
+
+    .about-grid, .svc-grid, .proj-grid, .testi-grid, .contact-grid {
+      display: grid; gap: 18px; margin-top: 28px;
+    }
+    .about-grid { grid-template-columns: 1.1fr .9fr; }
+    .svc-grid, .proj-grid { grid-template-columns: repeat(3, 1fr); }
+    .testi-grid { grid-template-columns: 1fr 1fr; }
+    .card, .statbox {
+      background: #fff; border: 1px solid #e4ecef; border-radius: 18px; padding: 22px; box-shadow: var(--shadow);
+    }
+    .statrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .statbox b { display: block; font-size: 28px; color: var(--navy); }
+    .statbox span { color: var(--muted); font-size: 12px; }
+    .card h3 { margin-bottom: 8px; font-size: 18px; }
+    .card p, .card li { color: #4b5d69; line-height: 1.65; font-size: 14px; }
+    .card ul { margin-left: 16px; }
+    .tag { display: inline-block; background: var(--green-soft); color: #146b42; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 999px; margin-bottom: 10px; }
+
+    .org { margin-top: 28px; display: grid; gap: 14px; }
+    .org-top, .org-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+    .org-card {
+      background: #fff; border: 1px solid #e4ecef; border-radius: 16px; padding: 16px 18px;
+      min-width: 200px; max-width: 260px; text-align: center; box-shadow: var(--shadow);
+    }
+    .org-card.owner { background: #062333; color: #fff; border-color: #062333; min-width: 280px; }
+    .org-card.owner p { color: #c5d4dd; }
+    .org-card.leader { border-top: 4px solid var(--navy); }
+    .org-card.team { border-top: 4px solid var(--green); }
+    .org-card h3 { font-size: 15px; margin: 6px 0 4px; }
+    .org-card p { color: #5b6d78; font-size: 12px; line-height: 1.5; }
+    .org-line { height: 18px; width: 2px; background: #c5d4dd; margin: 0 auto; }
+    .org-note { margin-top: 16px; font-size: 13px; color: var(--muted); text-align: center; max-width: 720px; margin-left: auto; margin-right: auto; }
+
+    .dark {
+      background: #062333; color: #fff;
+    }
+    .dark .lead, .dark .card p, .dark .card li { color: #c5d4dd; }
+    .dark .card { background: #0b3246; border-color: #16455d; box-shadow: none; }
+
+    .contact-grid { grid-template-columns: .9fr 1.1fr; }
+    label { display: block; font-size: 12px; font-weight: 700; color: #3d5160; margin: 12px 0 6px; }
+    input, select, textarea {
+      width: 100%; border: 1px solid #d5e0e7; border-radius: 10px;
+      padding: 10px 12px; font: inherit; color: var(--ink); background: #fbfcfd;
+    }
+    input:focus, select:focus, textarea:focus { outline: 2px solid #b7e0cb; border-color: #1b8f5a; background: #fff; }
+
+    footer.site {
+      background: #041822; color: #9fb3bf; padding: 28px 22px; font-size: 12px;
+    }
+    footer.site .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+    /* APP / ESTIMATOR */
+    .appbar-actions { display: none; gap: 8px; }
+    body.mode-app { background: var(--bg); }
+    body.mode-app .appbar-actions { display: flex; }
+    body.mode-app header.top { background: linear-gradient(90deg, #052536 0%, #0a4663 55%, #0c5a4a 100%); }
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr 340px;
+      gap: 16px;
+      padding: 16px;
+      align-items: start;
+    }
+    .panel { background: var(--card); border: 1px solid #e4ecef; border-radius: var(--radius); box-shadow: var(--shadow); }
+    .panel-h { padding: 14px 16px 10px; border-bottom: 1px solid #eef2f4; }
+    .panel-h h2 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .panel-h strong { display: block; margin-top: 4px; color: var(--ink); font-size: 16px; text-transform: none; letter-spacing: 0; }
+    .panel-b { padding: 14px 16px 16px; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .hint { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .chip {
+      border: 1px solid var(--line); background: #fff; border-radius: 999px;
+      padding: 6px 10px; font-size: 12px; font-weight: 700; cursor: pointer; color: #355061;
+    }
+    .chip.active { background: var(--green-soft); border-color: #9ad4b5; color: #146b42; }
+    .map-wrap { position: relative; }
+    .map-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+    .map-toolbar input { flex: 1; min-width: 180px; margin: 0; }
+    #map, #gmap { height: 360px; border-radius: 14px; border: 1px solid #d7e4ea; width: 100%; }
+    #gmap { border: 0; display: none; }
+    .map-note {
+      position: absolute; left: 12px; bottom: 12px; z-index: 500;
+      background: rgba(7,50,74,.88); color: #fff; font-size: 11px;
+      padding: 8px 10px; border-radius: 8px; max-width: 70%;
+    }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+    .kpi { background: #fff; border: 1px solid #e4ecef; border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow); }
+    .kpi span { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .kpi b { display: block; margin-top: 6px; font-size: 18px; letter-spacing: -.03em; }
+    .kpi em { font-style: normal; font-size: 11px; color: #1b8f5a; font-weight: 700; }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tab {
+      border: 0; background: #e7eef2; color: #355061; font-weight: 700;
+      padding: 8px 12px; border-radius: 999px; cursor: pointer; font-family: inherit; font-size: 12px;
+    }
+    .tab.active { background: var(--navy); color: #fff; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 8px 8px; border-bottom: 1px solid var(--line); }
+    td { padding: 9px 8px; border-bottom: 1px solid #eef2f4; vertical-align: top; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tfoot td { font-weight: 800; background: #f6faf8; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .score-box { background: linear-gradient(180deg, #f3fbf6, #fff); border: 1px solid #cfe8d8; border-radius: 14px; padding: 14px; }
+    .score-box .big { font-size: 28px; font-weight: 800; letter-spacing: -.04em; color: #146b42; }
+    .mini { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .mini div { background: #f7fafb; border-radius: 10px; padding: 10px; }
+    .mini span { display: block; font-size: 11px; color: var(--muted); font-weight: 700; }
+    .mini b { font-size: 14px; }
+    .alert { background: var(--amber-soft); border: 1px solid #f0d7a8; color: #7a4d0b; border-radius: 12px; padding: 10px 12px; font-size: 12px; line-height: 1.5; margin-top: 12px; }
+    .ok { background: var(--green-soft); border: 1px solid #b7e0cb; color: #146b42; border-radius: 12px; padding: 10px 12px; font-size: 12px; line-height: 1.5; margin-top: 12px; }
+    .list { list-style: none; display: grid; gap: 8px; }
+    .list li { border: 1px solid #e4ecef; border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+    .list li:hover { border-color: #9ad4b5; background: #f7fbf8; }
+    .list b { display: block; font-size: 13px; }
+    .list span { font-size: 12px; color: var(--muted); }
+
+    @media (max-width: 1180px) {
+      .layout, .about-grid, .svc-grid, .proj-grid, .testi-grid, .contact-grid { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+    }
+    @media print {
+      header.top, .header-actions, .chip-row, .tabs, footer, .alert, .map-toolbar { display: none !important; }
+      .layout { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand" onclick="showPage('home')">
+      <div class="logo">88</div>
+      <div>
+        <b>Studio 88 Plan <span class="badge">Prototype</span></b>
+        <small>Together we can · Tata ruang wilayah dan kota</small>
+      </div>
+    </div>
+    <nav class="main">
+      <button type="button" data-nav="home" class="active" onclick="showPage('home')">Beranda</button>
+      <button type="button" data-nav="profil" onclick="showPage('home','#profil')">Profil</button>
+      <button type="button" data-nav="organisasi" onclick="showPage('home','#organisasi')">Organisasi</button>
+      <button type="button" data-nav="layanan" onclick="showPage('home','#layanan')">Layanan</button>
+      <button type="button" data-nav="proyek" onclick="showPage('home','#proyek')">Proyek</button>
+      <button type="button" data-nav="app" onclick="showPage('app')">Estimasi Tarif</button>
+      <button type="button" data-nav="kontak" onclick="showPage('home','#kontak')">Kontak</button>
+    </nav>
+    <div class="appbar-actions">
+      <button class="btn btn-ghost" type="button" onclick="isiContoh()">Isi contoh</button>
+      <button class="btn btn-ghost" type="button" onclick="window.print()">Cetak RAB</button>
+      <button class="btn btn-green" type="button" onclick="hitung()">Hitung ulang</button>
+    </div>
+  </header>
+
+  <div id="page-home" class="page show">
+    <section class="hero">
+      <div>
+        <span>Studio 88 Plan · Bogor</span>
+        <h1>Konsultan tata ruang<br>wilayah dan kota.</h1>
+        <p>Didirikan tahun 2015 di Bogor. Company profile plus alat estimasi tarif pembuatan jalan untuk presentasi cepat ke klien.</p>
+        <div class="hero-actions">
+          <button class="btn btn-white" type="button" onclick="showPage('home','#profil')">Lihat profil</button>
+          <button class="btn btn-line" type="button" onclick="showPage('app')">Buka estimasi tarif</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="profil">
+      <div class="wrap">
+        <div class="kicker">Company profile</div>
+        <h2>Tentang Studio 88 Plan</h2>
+        <p class="lead">Studio 88 Plan bergerak di bidang jasa konsultan tata ruang wilayah dan kota. Didirikan tahun 2015 di Bogor. Motto: Together we can.</p>
+        <div class="about-grid">
+          <div class="card">
+            <h3>Siapa kami</h3>
+            <p>Kami membantu penyusunan desain kawasan, fasilitasi pengawasan pemanfaatan ruang, kajian transportasi, dan pendampingan teknis perencanaan. Produk baru di prototipe ini: estimasi tarif pembuatan, peningkatan, dan pemeliharaan jalan.</p>
+            <p style="margin-top:10px">Akun resmi: Instagram <a href="https://www.instagram.com/plan88studio/" target="_blank" rel="noopener">@plan88studio</a> dan Facebook <a href="https://www.facebook.com/people/Studio-88-PLAN/100063998084971/" target="_blank" rel="noopener">Studio 88 PLAN</a>.</p>
+          </div>
+          <div>
+            <div class="statrow">
+              <div class="statbox"><b>2015</b><span>berdiri di Bogor</span></div>
+              <div class="statbox"><b>PWK</b><span>tim perencana wilayah dan kota</span></div>
+              <div class="statbox"><b>57</b><span>arsip unggahan publik</span></div>
+              <div class="statbox"><b>Local</b><span>layanan tata ruang daerah</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="organisasi" style="padding-top:0">
+      <div class="wrap">
+        <div class="kicker">Struktur organisasi</div>
+        <h2>Owner, pimpinan, dan tim</h2>
+        <p class="lead">Jenjang ini mengikuti label resmi di umpan Instagram: Our Owner, As a Leader, dan As a Team. Jabatan internal (direktur, manager, koordinator) belum ditulis di akun publik, jadi tidak dikarang.</p>
+
+        <div class="org">
+          <div class="org-top">
+            <div class="org-card owner">
+              <div class="tag" style="background:#1f6f8a;color:#fff">Our Owner</div>
+              <h3>Pemilik studio</h3>
+              <p>Kartu “OUR OWNER” tampil di feed, tetapi nama orangnya tidak tertulis di kartu itu. 10 nama di bawah adalah yang sudah dipublikasikan.</p>
+            </div>
+          </div>
+          <div class="org-line"></div>
+          <div class="org-row">
+            <div class="org-card leader">
+              <div class="tag">As a leader</div>
+              <h3>Aria Gusandra, ST., M.PWK</h3>
+              <p>Pimpinan · perencana wilayah dan kota</p>
+            </div>
+            <div class="org-card leader">
+              <div class="tag">As a leader</div>
+              <h3>Yusuf Maulana, ST.</h3>
+              <p>Pimpinan · teknik</p>
+            </div>
+            <div class="org-card leader">
+              <div class="tag">As a leader</div>
+              <h3>M. Isnaeni S., ST.</h3>
+              <p>Pimpinan · teknik</p>
+            </div>
+            <div class="org-card leader">
+              <div class="tag">As a leader</div>
+              <h3>Prayoga A., ST., M.Eng</h3>
+              <p>Pimpinan · teknik / rekayasa</p>
+            </div>
+          </div>
+          <div class="org-line"></div>
+          <div class="org-row">
+            <div class="org-card team">
+              <div class="tag">As a team</div>
+              <h3>Wahyu Firmansyah, ST.</h3>
+              <p>Tim pelaksana · teknik</p>
+            </div>
+            <div class="org-card team">
+              <div class="tag">As a team</div>
+              <h3>Aji Suryayuda, S.PWK</h3>
+              <p>Tim pelaksana · PWK</p>
+            </div>
+            <div class="org-card team">
+              <div class="tag">As a team</div>
+              <h3>Putri Tindria, S.PWK</h3>
+              <p>Tim pelaksana · PWK</p>
+            </div>
+            <div class="org-card team">
+              <div class="tag">As a team</div>
+              <h3>Yuriidul I., S.PWK</h3>
+              <p>Tim pelaksana · PWK</p>
+            </div>
+            <div class="org-card team">
+              <div class="tag">As a team</div>
+              <h3>Didin Sajidin, S.PWK</h3>
+              <p>Tim pelaksana · PWK</p>
+            </div>
+            <div class="org-card team">
+              <div class="tag">As a team</div>
+              <h3>Novrico Adhiguna, S.PWK</h3>
+              <p>Tim pelaksana · PWK</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="about-grid" style="margin-top:28px">
+          <div class="card">
+            <h3>Cara baca struktur ini</h3>
+            <ul>
+              <li><b>Owner</b> — pemilik studio. Nama belum tercantum di kartu publik.</li>
+              <li><b>Leader (4 orang)</b> — pimpinan yang tampil sebagai wajah studio dan penanggung jawab kegiatan.</li>
+              <li><b>Team (6 orang)</b> — pelaksana kajian, gambar, survey, dan pendampingan.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Kompetensi dari gelar</h3>
+            <ul>
+              <li><b>PWK</b> — perencanaan wilayah dan kota: Aria, Aji, Putri, Yuriidul, Didin, Novrico.</li>
+              <li><b>ST / M.Eng</b> — teknik: Yusuf, M. Isnaeni, Prayoga, Wahyu.</li>
+            </ul>
+            <p style="margin-top:10px">Itu pembagian kompetensi, bukan jabatan resmi. Kalau Pak Acep punya bagan internal, tinggal ditimpa ke sini.</p>
+          </div>
+        </div>
+        <p class="org-note">Sumber: grid “PLAN STUDIO 88 teams” di instagram.com/plan88studio. Tidak menambah nama atau jabatan di luar itu.</p>
+      </div>
+    </section>
+
+    <section class="block dark" id="layanan">
+      <div class="wrap">
+        <div class="kicker">Layanan</div>
+        <h2>Yang dikerjakan studio</h2>
+        <p class="lead">Diambil dari unggahan resmi @plan88studio, plus modul estimasi tarif jalan yang sedang dibuat.</p>
+        <div class="svc-grid">
+          <div class="card">
+            <div class="tag">Inti</div>
+            <h3>Konsultan tata ruang</h3>
+            <p>Jasa konsultan seputar tata ruang wilayah dan kota, sesuai bio Instagram studio.</p>
+          </div>
+          <div class="card">
+            <div class="tag">Kawasan</div>
+            <h3>Desain penataan permukiman</h3>
+            <p>Contoh kerja: penyusunan desain penataan kawasan permukiman di Waduk Cibeet.</p>
+          </div>
+          <div class="card">
+            <div class="tag">Pengawasan</div>
+            <h3>Pemanfaatan ruang</h3>
+            <p>Fasilitasi penertiban indikasi pelanggaran pemanfaatan ruang dan pembahasan PP 21/2021.</p>
+          </div>
+          <div class="card">
+            <div class="tag">Transportasi</div>
+            <h3>Kajian jalur dan jalan</h3>
+            <p>Termasuk kajian jalur sepeda Kota Bogor dan estimasi tarif konstruksi jalan.</p>
+          </div>
+          <div class="card">
+            <div class="tag">Baru</div>
+            <h3>Estimasi tarif jalan</h3>
+            <p>Hitung cepat pembangunan baru, overlay, pemeliharaan, dan rekonstruksi. Ada di menu Estimasi Tarif.</p>
+          </div>
+          <div class="card">
+            <div class="tag">Pendampingan</div>
+            <h3>Diskusi dan pemaparan</h3>
+            <p>Group discussion, survey lapangan, dan pemaparan bersama mitra perguruan tinggi.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="proyek">
+      <div class="wrap">
+        <div class="kicker">Kegiatan</div>
+        <h2>Yang sudah tampil di umpan resmi</h2>
+        <p class="lead">Judul diambil dari unggahan @plan88studio. Detail volume/nilai belum ada di caption publik.</p>
+        <div class="proj-grid">
+          <div class="card">
+            <div class="tag">Kawasan</div>
+            <h3>Permukiman Waduk Cibeet</h3>
+            <p>Penyusunan desain penataan kawasan permukiman di Waduk Cibeet.</p>
+          </div>
+          <div class="card">
+            <div class="tag">Kota Bogor</div>
+            <h3>Jalur sepeda</h3>
+            <p>Kajian jalur sepeda Kota Bogor, lengkap dengan peta jaringan.</p>
+          </div>
+          <div class="card">
+            <div class="tag">Pengawasan</div>
+            <h3>Pemanfaatan ruang</h3>
+            <p>Fasilitasi penertiban indikasi pelanggaran pemanfaatan ruang.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="testimoni">
+      <div class="wrap">
+        <div class="kicker">Budaya kerja</div>
+        <h2>Together we can</h2>
+        <div class="testi-grid">
+          <div class="card">
+            <p>Studio ini menampilkan tim perencana (PWK) di umpan resmi, bukan testimoni pihak ketiga. Kutipan klien belum dipasang agar tidak mengada-ada.</p>
+          </div>
+          <div class="card">
+            <p>Highlight Instagram: Pertemuan dan Kegiatan 2021. Isi web ini mengikuti jejak publik itu, plus modul estimasi tarif jalan.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block dark" id="kontak">
+      <div class="wrap">
+        <div class="kicker">Get in touch</div>
+        <h2>Kontak</h2>
+        <div class="contact-grid">
+          <div class="card">
+            <p><b>Studio 88 PLAN</b><br>Local business · Tata ruang wilayah dan kota<br>Bogor, Jawa Barat</p>
+            <p style="margin-top:10px">Telp: <a href="tel:+622518573727">(0251) 8573727</a><br>
+            Email: <a href="mailto:plan88studio@gmail.com">plan88studio@gmail.com</a></p>
+            <p style="margin-top:8px">Instagram: <a href="https://www.instagram.com/plan88studio/" target="_blank" rel="noopener">@plan88studio</a><br>
+            Facebook: <a href="https://www.facebook.com/people/Studio-88-PLAN/100063998084971/" target="_blank" rel="noopener">Studio 88 PLAN</a></p>
+            <p class="muted" style="margin-top:12px">Nomor telepon dari halaman Facebook resmi. Alamat jalan lengkap belum tertulis di intro publik.</p>
+          </div>
+          <div class="card">
+            <form onsubmit="kirimPesan(event)">
+              <label>Nama</label>
+              <input id="cpNama" required placeholder="Nama lengkap" />
+              <label>Email atau WhatsApp</label>
+              <input id="cpHub" required placeholder="kontak@email.com / 08xx" />
+              <label>Pesan</label>
+              <textarea id="cpPesan" rows="4" required placeholder="Kebutuhan kajian atau paket jalan..."></textarea>
+              <button class="btn btn-green" type="submit" style="margin-top:14px">Kirim pesan</button>
+              <p class="hint" id="cpStatus">Form prototipe hanya menampilkan konfirmasi di layar, belum terhubung server.</p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site">
+      <div class="wrap">
+        <div>© 2026 Studio 88 Plan · Together we can</div>
+        <div>plan88studio@gmail.com · @plan88studio</div>
+      </div>
+    </footer>
+  </div>
+
+  <div id="page-app" class="page">
+    <div class="layout">
+      <aside class="panel">
+        <div class="panel-h">
+          <h2>Parameter proyek</h2>
+          <strong>Input estimasi cepat</strong>
+        </div>
+        <div class="panel-b">
+          <label>Nama paket pekerjaan</label>
+          <input id="nama" value="Pembangunan Jalan Lingkungan Desa Sukamaju" />
+
+          <label>Jenis pekerjaan</label>
+          <select id="jenis">
+            <option value="baru">Pembangunan jalan baru</option>
+            <option value="peningkatan">Peningkatan / overlay</option>
+            <option value="rutin">Pemeliharaan rutin</option>
+            <option value="rekonstruksi">Rekonstruksi</option>
+          </select>
+
+          <label>Jenis perkerasan</label>
+          <select id="perkerasan">
+            <option value="aspal">Hotmix aspal (AC-BC + AC-WC)</option>
+            <option value="beton">Beton kaku (rigid)</option>
+            <option value="sirtu">Sirtu / makadam</option>
+          </select>
+
+          <div class="row-2">
+            <div>
+              <label>Panjang (m)</label>
+              <input id="panjang" type="number" min="10" value="1000" />
+            </div>
+            <div>
+              <label>Lebar perkerasan (m)</label>
+              <input id="lebar" type="number" min="2" step="0.1" value="5" />
+            </div>
+          </div>
+
+          <div class="row-2">
+            <div>
+              <label>Lebar bahu kiri-kanan (m)</label>
+              <input id="bahu" type="number" min="0" step="0.1" value="1" />
+            </div>
+            <div>
+              <label>Drainase</label>
+              <select id="drainase">
+                <option value="dua">U-ditch dua sisi</option>
+                <option value="satu">U-ditch satu sisi</option>
+                <option value="tidak">Tanpa saluran baru</option>
+              </select>
+            </div>
+          </div>
+
+          <label>Wilayah / faktor harga</label>
+          <select id="wilayah">
+            <option value="1.00" data-lat="-6.2" data-lng="106.8" data-nama="Jawa (dasar)">Jawa — faktor 1,00</option>
+            <option value="1.08" data-lat="-0.5" data-lng="101.4" data-nama="Sumatera">Sumatera — faktor 1,08</option>
+            <option value="1.10" data-lat="-8.4" data-lng="115.2" data-nama="Bali–Nusa">Bali &amp; Nusa Tenggara — faktor 1,10</option>
+            <option value="1.12" data-lat="-2.5" data-lng="120.2" data-nama="Sulawesi">Sulawesi — faktor 1,12</option>
+            <option value="1.15" data-lat="-1.5" data-lng="113.5" data-nama="Kalimantan">Kalimantan — faktor 1,15</option>
+            <option value="1.25" data-lat="-4.2" data-lng="138.0" data-nama="Papua–Maluku">Papua &amp; Maluku — faktor 1,25</option>
+          </select>
+          <p class="hint">Faktor menyesuaikan jarak material, mobilisasi, dan upah. Bukan harga resmi AHSP daerah.</p>
+
+          <label>Kondisi lahan</label>
+          <div class="chip-row" id="lahanChips">
+            <button type="button" class="chip active" data-v="1.00">Datar / mudah</button>
+            <button type="button" class="chip" data-v="1.12">Bergelombang</button>
+            <button type="button" class="chip" data-v="1.28">Sulit / rawa / cut-fill besar</button>
+          </div>
+          <input type="hidden" id="lahan" value="1.00" />
+
+          <label>Catatan lokasi</label>
+          <textarea id="catatan" rows="3" placeholder="Contoh: tanah sawah, perlu urugan 40 cm, akses dump truck terbatas..."></textarea>
+
+          <button class="btn btn-navy" type="button" style="width:100%;margin-top:14px" onclick="hitung()">Hitung estimasi</button>
+          <p class="hint">Harga satuan masih asumsi 2026 untuk demo.</p>
+        </div>
+      </aside>
+
+      <main>
+        <div class="kpis">
+          <div class="kpi"><span>Estimasi total</span><b id="kpiTotal">—</b><em id="kpiTerbilang">isi parameter lalu hitung</em></div>
+          <div class="kpi"><span>Per meter panjang</span><b id="kpiMeter">—</b><em>termasuk OHP &amp; PPN</em></div>
+          <div class="kpi"><span>Per m² perkerasan</span><b id="kpiM2">—</b><em id="kpiLuas">luas 0 m²</em></div>
+          <div class="kpi"><span>Kelas estimasi</span><b id="kpiKelas">Pra-RAB</b><em>akurasi prototipe ±25%</em></div>
+        </div>
+
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-h">
+            <h2>Konteks spasial</h2>
+            <strong>Peta wilayah kerja</strong>
+          </div>
+          <div class="panel-b map-wrap">
+            <div class="map-toolbar">
+              <button type="button" class="chip active" id="btnGmaps" onclick="setEngine('gmaps')">Google Maps</button>
+              <button type="button" class="chip" id="btnOsm" onclick="setEngine('osm')">OSM / Leaflet</button>
+              <input id="lokasiPeta" placeholder="Cari lokasi, contoh: Cibinong, Kabupaten Bogor" />
+              <button type="button" class="btn btn-navy" onclick="updateMap()">Tampilkan</button>
+            </div>
+            <iframe id="gmap" title="Google Maps" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+            <div id="map" style="display:none"></div>
+            <div class="map-note" id="mapNote">Pilih wilayah atau ketik nama lokasi.</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h">
+            <h2>Output kajian</h2>
+            <strong>Rincian RAB ringkas</strong>
+          </div>
+          <div class="panel-b">
+            <div class="tabs">
+              <button class="tab active" data-tab="rab" type="button">RAB</button>
+              <button class="tab" data-tab="asumsi" type="button">Asumsi harga</button>
+              <button class="tab" data-tab="narasi" type="button">Ringkasan eksekutif</button>
+            </div>
+            <div id="tab-rab">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Uraian</th>
+                    <th>Sat</th>
+                    <th class="num">Vol</th>
+                    <th class="num">Harga satuan</th>
+                    <th class="num">Jumlah</th>
+                  </tr>
+                </thead>
+                <tbody id="rabBody"></tbody>
+                <tfoot id="rabFoot"></tfoot>
+              </table>
+            </div>
+            <div id="tab-asumsi" hidden>
+              <p class="muted" style="margin-bottom:10px">Harga asumsi demo, bukan AHSP resmi.</p>
+              <table>
+                <thead><tr><th>Komponen</th><th>Sat</th><th class="num">Aspal</th><th class="num">Beton</th><th class="num">Sirtu</th></tr></thead>
+                <tbody>
+                  <tr><td>Penyiapan badan jalan + tanah</td><td>m²</td><td class="num">28.000</td><td class="num">28.000</td><td class="num">22.000</td></tr>
+                  <tr><td>Lapis pondasi</td><td>m²</td><td class="num">95.000</td><td class="num">120.000</td><td class="num">55.000</td></tr>
+                  <tr><td>Perkerasan permukaan</td><td>m²</td><td class="num">185.000</td><td class="num">260.000</td><td class="num">35.000</td></tr>
+                  <tr><td>Bahu jalan</td><td>m²</td><td class="num">45.000</td><td class="num">45.000</td><td class="num">30.000</td></tr>
+                  <tr><td>U-ditch + penutup</td><td>m'</td><td class="num">420.000</td><td class="num">420.000</td><td class="num">380.000</td></tr>
+                  <tr><td>Marka + rambu</td><td>m'</td><td class="num">28.000</td><td class="num">28.000</td><td class="num">12.000</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="tab-narasi" hidden>
+              <div id="narasiBox" class="ok"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <aside>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-h">
+            <h2>Hasil skenario</h2>
+            <strong>Ringkasan keputusan</strong>
+          </div>
+          <div class="panel-b">
+            <div class="score-box">
+              <span class="muted">TOTAL TERKOREKSI WILAYAH</span>
+              <div class="big" id="sideTotal">—</div>
+              <p class="muted" id="sidePaket" style="margin-top:6px"></p>
+              <div class="mini">
+                <div><span>Pekerjaan pokok</span><b id="sidePokok">—</b></div>
+                <div><span>OHP 15%</span><b id="sideOhp">—</b></div>
+                <div><span>PPN 11%</span><b id="sidePpn">—</b></div>
+                <div><span>Faktor total</span><b id="sideFaktor">—</b></div>
+              </div>
+            </div>
+            <div class="alert">Prototype untuk presentasi konsep. Jangan dipakai dasar kontrak sebelum divalidasi AHSP dan survey.</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-h">
+            <h2>Studi kasus cepat</h2>
+            <strong>Klik untuk mengisi form</strong>
+          </div>
+          <div class="panel-b">
+            <ul class="list">
+              <li onclick="pakaiKasus('desa')"><b>Jalan desa 1 km · aspal 5 m</b><span>Pembangunan baru, lahan datar, Jawa</span></li>
+              <li onclick="pakaiKasus('kota')"><b>Peningkatan jalan kota 800 m · beton 7 m</b><span>Overlay, lahan mudah, Jawa</span></li>
+              <li onclick="pakaiKasus('papua')"><b>Jalan baru 2 km · sirtu 4 m · Papua</b><span>Kondisi sulit, faktor 1,25</span></li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const HARGA = {
+      aspal: { tanah: 28000, pondasi: 95000, permukaan: 185000, bahu: 45000, drain: 420000, marka: 28000, mob: 18000000, k3: 8000000 },
+      beton: { tanah: 28000, pondasi: 120000, permukaan: 260000, bahu: 45000, drain: 420000, marka: 28000, mob: 22000000, k3: 9000000 },
+      sirtu: { tanah: 22000, pondasi: 55000, permukaan: 35000, bahu: 30000, drain: 380000, marka: 12000, mob: 12000000, k3: 5000000 }
+    };
+    const JENIS_FAKTOR = { baru: 1, peningkatan: 0.62, rutin: 0.18, rekonstruksi: 0.88 };
+    let map, marker, mapEngine = "gmaps", mapReady = false;
+
+    function showPage(name, hash) {
+      document.getElementById("page-home").classList.toggle("show", name === "home");
+      document.getElementById("page-app").classList.toggle("show", name === "app");
+      document.body.classList.toggle("mode-app", name === "app");
+      document.querySelectorAll("nav.main button").forEach((b) => {
+        b.classList.toggle("active", b.getAttribute("data-nav") === (hash ? hash.replace("#","") : name));
+      });
+      if (name === "app") {
+        if (!mapReady) initMap();
+        hitung();
+        setTimeout(() => { if (map) map.invalidateSize(); }, 250);
+        window.scrollTo(0, 0);
+      } else if (hash) {
+        setTimeout(() => {
+          const el = document.querySelector(hash);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 50);
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    function kirimPesan(e) {
+      e.preventDefault();
+      document.getElementById("cpStatus").textContent =
+        "Terima kasih, " + document.getElementById("cpNama").value + ". Pesan prototipe tercatat di layar ini.";
+    }
+
+    function rupiah(n) { return "Rp " + Math.round(n).toLocaleString("id-ID"); }
+
+    function getLokasi() {
+      const opt = document.querySelector("#wilayah option:checked");
+      const custom = document.getElementById("lokasiPeta").value.trim();
+      return {
+        lat: parseFloat(opt.dataset.lat),
+        lng: parseFloat(opt.dataset.lng),
+        query: custom || (opt.dataset.nama + ", Indonesia")
+      };
+    }
+
+    function initMap() {
+      map = L.map("map", { zoomControl: true }).setView([-2.5, 118], 5);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18, attribution: "&copy; OpenStreetMap"
+      }).addTo(map);
+      marker = L.marker([-6.2, 106.8]).addTo(map);
+      mapReady = true;
+      setEngine("gmaps");
+    }
+
+    function setEngine(engine) {
+      mapEngine = engine;
+      document.getElementById("btnGmaps").classList.toggle("active", engine === "gmaps");
+      document.getElementById("btnOsm").classList.toggle("active", engine === "osm");
+      document.getElementById("gmap").style.display = engine === "gmaps" ? "block" : "none";
+      document.getElementById("map").style.display = engine === "osm" ? "block" : "none";
+      updateMap();
+      if (engine === "osm" && map) setTimeout(() => map.invalidateSize(), 200);
+    }
+
+    function updateMap() {
+      const loc = getLokasi();
+      if (map && marker) {
+        map.setView([loc.lat, loc.lng], 7);
+        marker.setLatLng([loc.lat, loc.lng]);
+      }
+      document.getElementById("gmap").src =
+        "https://maps.google.com/maps?q=" + encodeURIComponent(loc.query) + "&hl=id&z=11&output=embed";
+      document.getElementById("mapNote").textContent = "Peta aktif: " + loc.query;
+    }
+
+    document.getElementById("lahanChips").addEventListener("click", (e) => {
+      const btn = e.target.closest(".chip");
+      if (!btn) return;
+      document.querySelectorAll("#lahanChips .chip").forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("lahan").value = btn.dataset.v;
+      hitung();
+    });
+
+    document.querySelectorAll(".tab").forEach((t) => {
+      t.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
+        t.classList.add("active");
+        ["rab", "asumsi", "narasi"].forEach((id) => {
+          document.getElementById("tab-" + id).hidden = t.dataset.tab !== id;
+        });
+      });
+    });
+
+    ["jenis", "perkerasan", "panjang", "lebar", "bahu", "drainase", "wilayah"].forEach((id) => {
+      document.getElementById(id).addEventListener("change", hitung);
+      document.getElementById(id).addEventListener("input", hitung);
+    });
+    document.getElementById("wilayah").addEventListener("change", updateMap);
+    document.getElementById("lokasiPeta").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); updateMap(); }
+    });
+
+    function hitung() {
+      const nama = document.getElementById("nama").value.trim() || "Paket jalan";
+      const jenis = document.getElementById("jenis").value;
+      const perk = document.getElementById("perkerasan").value;
+      const panjang = Math.max(0, Number(document.getElementById("panjang").value) || 0);
+      const lebar = Math.max(0, Number(document.getElementById("lebar").value) || 0);
+      const bahu = Math.max(0, Number(document.getElementById("bahu").value) || 0);
+      const drain = document.getElementById("drainase").value;
+      const wilayah = Number(document.getElementById("wilayah").value);
+      const lahan = Number(document.getElementById("lahan").value);
+      const catatan = document.getElementById("catatan").value.trim();
+      const luas = panjang * lebar;
+      const luasBahu = panjang * bahu * 2;
+      const volDrain = drain === "dua" ? panjang * 2 : drain === "satu" ? panjang : 0;
+      const h = HARGA[perk];
+      const fj = JENIS_FAKTOR[jenis];
+      const items = [
+        { uraian: "Mobilisasi alat & material", sat: "ls", vol: 1, hs: h.mob * (panjang > 1500 ? 1.25 : 1) },
+        { uraian: "Keselamatan konstruksi (K3)", sat: "ls", vol: 1, hs: h.k3 },
+        { uraian: "Penyiapan badan jalan & pekerjaan tanah", sat: "m²", vol: luas + luasBahu, hs: h.tanah * fj },
+        { uraian: "Lapis pondasi", sat: "m²", vol: luas, hs: h.pondasi * fj },
+        { uraian: "Perkerasan permukaan", sat: "m²", vol: luas, hs: h.permukaan * fj },
+        { uraian: "Bahu jalan", sat: "m²", vol: luasBahu, hs: h.bahu * fj },
+        { uraian: "Saluran U-ditch", sat: "m'", vol: volDrain, hs: h.drain * (jenis === "rutin" ? 0.15 : fj) },
+        { uraian: "Marka, rambu, patok", sat: "m'", vol: panjang, hs: h.marka * (jenis === "rutin" ? 0.35 : 1) }
+      ];
+      items.forEach((it) => { it.jumlah = it.vol * it.hs; });
+      const pokok = items.reduce((s, it) => s + it.jumlah, 0);
+      const terkoreksi = pokok * wilayah * lahan;
+      const ohp = terkoreksi * 0.15;
+      const ppn = (terkoreksi + ohp) * 0.11;
+      const total = terkoreksi + ohp + ppn;
+      document.getElementById("rabBody").innerHTML = items.map((it) => `
+        <tr>
+          <td>${it.uraian}</td><td>${it.sat}</td>
+          <td class="num">${it.vol.toLocaleString("id-ID", { maximumFractionDigits: 1 })}</td>
+          <td class="num">${rupiah(it.hs)}</td>
+          <td class="num">${rupiah(it.jumlah)}</td>
+        </tr>`).join("");
+      document.getElementById("rabFoot").innerHTML = `
+        <tr><td colspan="4">Jumlah pekerjaan (sebelum faktor)</td><td class="num">${rupiah(pokok)}</td></tr>
+        <tr><td colspan="4">Faktor wilayah ${wilayah.toFixed(2)} × kondisi lahan ${lahan.toFixed(2)}</td><td class="num">${rupiah(terkoreksi)}</td></tr>
+        <tr><td colspan="4">Overhead &amp; profit 15%</td><td class="num">${rupiah(ohp)}</td></tr>
+        <tr><td colspan="4">PPN 11%</td><td class="num">${rupiah(ppn)}</td></tr>
+        <tr><td colspan="4">TOTAL ESTIMASI</td><td class="num">${rupiah(total)}</td></tr>`;
+      document.getElementById("kpiTotal").textContent = rupiah(total);
+      document.getElementById("kpiTerbilang").textContent = nama;
+      document.getElementById("kpiMeter").textContent = panjang ? rupiah(total / panjang) : "—";
+      document.getElementById("kpiM2").textContent = luas ? rupiah(total / luas) : "—";
+      document.getElementById("kpiLuas").textContent = "luas " + luas.toLocaleString("id-ID") + " m²";
+      document.getElementById("sideTotal").textContent = rupiah(total);
+      document.getElementById("sidePaket").textContent = nama;
+      document.getElementById("sidePokok").textContent = rupiah(terkoreksi);
+      document.getElementById("sideOhp").textContent = rupiah(ohp);
+      document.getElementById("sidePpn").textContent = rupiah(ppn);
+      document.getElementById("sideFaktor").textContent = (wilayah * lahan).toFixed(2) + "×";
+      const jenisLabel = document.querySelector("#jenis option:checked").textContent;
+      const perkLabel = document.querySelector("#perkerasan option:checked").textContent;
+      document.getElementById("narasiBox").innerHTML = `
+        <b>${nama}</b><br/>
+        Paket ${jenisLabel.toLowerCase()} dengan perkerasan ${perkLabel.toLowerCase()},
+        panjang ${panjang.toLocaleString("id-ID")} m dan lebar ${lebar} m.
+        Estimasi total <b>${rupiah(total)}</b>.
+        ${catatan ? "Catatan lapangan: " + catatan + "." : ""}`;
+    }
+
+    function isiContoh() { pakaiKasus("desa"); }
+
+    function pakaiKasus(k) {
+      const set = {
+        desa: { nama: "Pembangunan Jalan Lingkungan Desa Sukamaju", jenis: "baru", perkerasan: "aspal", panjang: 1000, lebar: 5, bahu: 1, drainase: "dua", wilayah: "1.00", lahan: "1.00", catatan: "Lahan sawah kering, akses dump truck tersedia." },
+        kota: { nama: "Peningkatan Jalan Kolektor Kota — Segmen Pasar Baru", jenis: "peningkatan", perkerasan: "beton", panjang: 800, lebar: 7, bahu: 0.5, drainase: "satu", wilayah: "1.00", lahan: "1.00", catatan: "Jalur existing, lalu lintas sedang." },
+        papua: { nama: "Pembukaan Jalan Poros Kampung — Distrik Utara", jenis: "baru", perkerasan: "sirtu", panjang: 2000, lebar: 4, bahu: 0.75, drainase: "satu", wilayah: "1.25", lahan: "1.28", catatan: "Cut-fill besar, material jauh." }
+      }[k];
+      Object.entries(set).forEach(([key, val]) => {
+        if (key === "lahan") {
+          document.getElementById("lahan").value = val;
+          document.querySelectorAll("#lahanChips .chip").forEach((c) => c.classList.toggle("active", c.dataset.v === val));
+        } else if (document.getElementById(key)) document.getElementById(key).value = val;
+      });
+      updateMap();
+      hitung();
+    }
+  </script>
+</body>
+</html>

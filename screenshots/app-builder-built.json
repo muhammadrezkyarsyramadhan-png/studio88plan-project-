@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Studio 88 PLAN",
+      "hasCanvas": false,
+      "bodyTextLen": 2992,
+      "bodyTextHash": "e1bff3bf129c1bf9fa883e9ea0a832944820d6d28035176cc3028668d9a8590f",
+      "bodyTextPrefix": "88 Studio 88 PLAN TOGETHER WE CAN Beranda Profil Organisasi Laya",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Studio 88 PLAN",
+      "hasCanvas": false,
+      "bodyTextLen": 2922,
+      "bodyTextHash": "4b76bc949e76a4b4f399ab7f9b225f704ed6ef12974c0eab1c6422a9798a57c5",
+      "bodyTextPrefix": "88 Studio 88 PLAN TOGETHER WE CAN BOGOR, JAWA BARAT · BERDIRI 20",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-built.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}

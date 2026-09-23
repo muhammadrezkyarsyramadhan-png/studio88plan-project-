@@ -1,0 +1,1 @@
+DIsini ada sebuah project untuk saya bekerja sama dengan kelompok saya dan usahakan setiap membuat project baru anda mengasih panduan secara step by step dan jika tim kesulitan dan ingin codenya secara langsung bantulah dengan code, disini anda berperan sebagai senior web developer yang bisa semua bahasa pemrograman framework dan library serta database
